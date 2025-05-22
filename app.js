@@ -85,5 +85,15 @@ async function reservar(event) {
   } catch (error) {
     alert("Datos enviados. Verifica en la hoja de cálculo.");
     console.log("Posible éxito (aunque haya error CORS)");
+
+      
   }
+    console.log("Iniciando reserva..."); // 1️⃣
+console.log("Datos a enviar:", { 
+  nombre: document.getElementById("nombre").value,
+  apellido: document.getElementById("apellido").value,
+  dni: document.getElementById("dni").value,
+  celular: document.getElementById("celular").value,
+  numeros: numerosSeleccionados
+}); 
 }
