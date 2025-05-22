@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rifa Online</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        input, button { display: block; margin: 10px 0; padding: 8px; width: 100%; }
+        .numero { display: inline-block; width: 30px; text-align: center; margin: 5px; cursor: pointer; }
+        .seleccionado { background-color: #4CAF50; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Reserva tu Número</h1>
+    <div id="form1">
+        <input type="text" id="nombre" placeholder="Nombre">
+        <input type="text" id="apellido" placeholder="Apellido">
+        <input type="text" id="dni" placeholder="DNI">
+        <input type="text" id="celular" placeholder="Celular">
+        <button onclick="mostrarNumeros()">Siguiente</button>
+    </div>
+
+    <div id="form2" style="display: none;">
+        <h2>Elige hasta 5 números (00-99):</h2>
+        <div id="numeros-container"></div>
+        <button onclick="reservar()">Reservar</button>
+    </div>
+
+    <div id="confirmacion" style="display: none;">
+        <h2>¡Reserva exitosa!</h2>
+        <p>Transfiere a: <strong id="alias-display">ALIAS_DE_EJEMPLO</strong></p>
+        <p>Envía el comprobante por WhatsApp: <a id="whatsapp-link" href="#">Haz clic aquí</a></p>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
