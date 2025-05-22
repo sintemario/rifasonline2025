@@ -1,16 +1,20 @@
-// CONFIGURACIÓN (EDITA ESTO)
+// CONFIGURACIÓN
 const CONFIG = {
-    ALIAS: "TU_ALIAS_DE_PAGO",  // Ej: "continente.contenido"
-    WHATSAPP: "542266494705",   // Ej: código país + número sin +
+    ALIAS: "TU_ALIAS_DE_PAGO",  // Ej: "mercadopago.mirifa"
+    WHATSAPP: "542266494705",    // Código país + número (sin +)
     MAX_NUMEROS: 5,
-    API_URL: "https://script.google.com/macros/s/AKfycbwjsZcoI9M6pYHkPxBINN4yA2t7ELn7BTaUOYII8nHi01ER75s3xDvoKTdmQcZYlY93/exec"  // La obtendrás después de desplegar el Apps Script
+    API_URL: "https://script.google.com/macros/s/AKfycbwduUBIQxsbZih7cPMj0dj8TNHS8WXOv5ShJ8-ZGKZlp5b9vMMVSHgjZ1_Cv2X9E1OCRw/exec"
 };
 
+// Variables globales
 let numerosSeleccionados = [];
 
+// Funciones principales
 function mostrarNumeros() {
-    // Validar datos antes de avanzar
-    if (!validarDatos()) return;
+    if (!validarDatos()) {
+        alert("Por favor completa nombre y DNI");
+        return;
+    }
 
     document.getElementById("form1").style.display = "none";
     document.getElementById("form2").style.display = "block";
@@ -18,21 +22,21 @@ function mostrarNumeros() {
 }
 
 function validarDatos() {
-    const nombre = document.getElementById("nombre").value;
-    const dni = document.getElementById("dni").value;
-    // Agrega más validaciones si necesitas
-    return nombre && dni; // Retorna true si los campos no están vacíos
+    const nombre = document.getElementById("nombre").value.trim();
+    const dni = document.getElementById("dni").value.trim();
+    return nombre.length > 0 && dni.length > 0;
 }
 
 function generarNumeros() {
     const container = document.getElementById("numeros-container");
     container.innerHTML = "";
+    
     for (let i = 0; i < 100; i++) {
         const num = i.toString().padStart(2, "0");
         const div = document.createElement("div");
         div.className = "numero";
         div.textContent = num;
-        div.onclick = () => toggleNumero(num);
+        div.addEventListener("click", () => toggleNumero(num));
         container.appendChild(div);
     }
 }
@@ -40,55 +44,80 @@ function generarNumeros() {
 function toggleNumero(num) {
     const index = numerosSeleccionados.indexOf(num);
     if (index >= 0) {
-        numerosSeleccionados.splice(index, 1); // Deseleccionar
+        numerosSeleccionados.splice(index, 1);
     } else if (numerosSeleccionados.length < CONFIG.MAX_NUMEROS) {
-        numerosSeleccionados.push(num); // Seleccionar
+        numerosSeleccionados.push(num);
     }
     actualizarUI();
 }
 
 function actualizarUI() {
-    const numeros = document.querySelectorAll(".numero");
-    numeros.forEach(numDiv => {
-        if (numerosSeleccionados.includes(numDiv.textContent)) {
-            numDiv.classList.add("seleccionado");
-        } else {
-            numDiv.classList.remove("seleccionado");
-        }
+    document.querySelectorAll(".numero").forEach(numDiv => {
+        numDiv.classList.toggle("seleccionado", 
+            numerosSeleccionados.includes(numDiv.textContent));
     });
 }
-async function reservar() {
-    const data = {
-      nombre: document.getElementById("nombre").value,
-      apellido: document.getElementById("apellido").value,
-      dni: document.getElementById("dni").value,
-      celular: document.getElementById("celular").value,
-      numeros: numerosSeleccionados
-    };
-  
-     try {
-        // Opción 1: Proxy público alternativo (no requiere autenticación)
-        const PROXY_URL = 'https://proxy.cors.sh/';
-        const API_URL = `${PROXY_URL}${CONFIG.API_URL}`;
-        
-        // Opción 2: Tu propio proxy en Vercel/Netlify (más confiable)
-        // const API_URL = `https://tu-proxy.vercel.app/api/proxy?url=${encodeURIComponent(CONFIG.API_URL)}`;
 
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-cors-api-key': 'temp_09a8a1e4b3f5e1b1e4b3f5e1b1e4b3f5' // Clave temporal para cors.sh
-            },
-            body: JSON.stringify(data)
+async function reservar() {
+    // Validación básica
+    if (numerosSeleccionados.length === 0) {
+        alert("Selecciona al menos un número");
+        return;
+    }
+
+    // Obtener datos del formulario
+    const data = {
+        nombre: document.getElementById("nombre").value.trim(),
+        apellido: document.getElementById("apellido").value.trim(),
+        dni: document.getElementById("dni").value.trim(),
+        celular: document.getElementById("celular").value.trim(),
+        numeros: numerosSeleccionados
+    };
+
+    // Validación avanzada
+    if (!data.nombre || !data.dni || !data.celular) {
+        alert("Completa todos los campos obligatorios");
+        return;
+    }
+
+    try {
+        // Configuración de la solicitud
+        const response = await fetch(CONFIG.API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+            redirect: "follow" // Importante para Google Apps Script
         });
 
-        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        // Manejar redirección (necesario para GAS)
+        const finalUrl = response.redirected ? response.url : CONFIG.API_URL;
+        const finalResponse = await fetch(finalUrl);
         
-        const result = await response.json();
-        // ... manejo de la respuesta
+        if (!finalResponse.ok) {
+            throw new Error(`Error del servidor: ${finalResponse.status}`);
+        }
+
+        const result = await finalResponse.json();
+
+        // Mostrar confirmación
+        if (result.success) {
+            document.getElementById("form2").style.display = "none";
+            document.getElementById("confirmacion").style.display = "block";
+            document.getElementById("alias-display").textContent = CONFIG.ALIAS;
+            document.getElementById("whatsapp-link").href = `https://wa.me/${CONFIG.WHATSAPP}`;
+            
+            // Limpiar selección
+            numerosSeleccionados = [];
+            actualizarUI();
+        } else {
+            throw new Error(result.error || "Error desconocido");
+        }
+
     } catch (error) {
         console.error("Error completo:", error);
-        alert("Error al reservar. Recarga la página e intenta nuevamente.");
+        alert(`Error al reservar: ${error.message}\nIntenta nuevamente.`);
+        
+        // Opcional: Reintentar automáticamente
+        // setTimeout(reservar, 2000);
     }
 }
