@@ -81,34 +81,41 @@ async function reservar() {
         return;
     }
 
-    try {
-        // URL directa SIN proxy
-        const API_URL = "https://script.google.com/macros/s/AKfycbxWj7-50CBqvEM-eT9dwSmQ5HbR7mLdMp6YW6Q5F3ge8izCYBQhv3zQcQ4q99SZW2AQ5Q/exec";
-        
-        // Enviar datos con manejo especial para GAS
-        const response = await fetch(API_URL, {
+ try {
+        const response = await fetch("/api/proxy", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-            credentials: 'omit',
-            redirect: 'manual' // Crucial para evitar CORS
+            body: JSON.stringify({
+                url: "https://script.google.com/macros/s/AKfycbxWj7-50CBqvEM-eT9dwSmQ5HbR7mLdMp6YW6Q5F3ge8izCYBQhv3zQcQ4q99SZW2AQ5Q/exec",
+                data: {
+                    nombre: data.nombre,
+                    apellido: data.apellido,
+                    dni: data.dni,
+                    celular: data.celular,
+                    numeros: data.numeros
+                }
+            })
         });
 
-        // Manejar redirección manualmente
-        if (response.type === 'opaqueredirect') {
-            const finalResponse = await fetch(response.url);
-            const result = await finalResponse.json();
-            handleResponse(result);
+        const result = await response.json();
+
+        if (result.success) {
+            document.getElementById("form2").style.display = "none";
+            document.getElementById("confirmacion").style.display = "block";
+            document.getElementById("alias-display").textContent = CONFIG.ALIAS;
+            document.getElementById("whatsapp-link").href = `https://wa.me/${CONFIG.WHATSAPP}`;
+            
+            numerosSeleccionados = [];
+            actualizarUI();
         } else {
-            const result = await response.json();
-            handleResponse(result);
+            throw new Error(result.error || "Error en el servidor");
         }
-        
     } catch (error) {
         console.error("Error completo:", error);
-        alert("Error al conectar con el servidor. Por favor intenta nuevamente.");
-    }
+        alert("Error al reservar: " + error.message);}
+    // ▲▲▲ HASTA AQUÍ ▲▲▲
 }
+     
 
 function handleResponse(result) {
     if (result.success) {
