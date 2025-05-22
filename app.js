@@ -3,7 +3,7 @@ const CONFIG = {
     ALIAS: "TU_ALIAS_DE_PAGO",  // Ej: "mercadopago.mirifa"
     WHATSAPP: "542266494705",    // Código país + número (sin +)
     MAX_NUMEROS: 5,
-    API_URL: "https://script.google.com/macros/s/AKfycbwduUBIQxsbZih7cPMj0dj8TNHS8WXOv5ShJ8-ZGKZlp5b9vMMVSHgjZ1_Cv2X9E1OCRw/exec"
+    API_URL: "https://script.google.com/macros/s/AKfycbxhNe1raXzKI6G3eueLReUDqv6UYjfpbC0SsLHfwF803D2W7NIdPtRrmla6clUVf8Z0ZA/exec"
 };
 
 // Variables globales
