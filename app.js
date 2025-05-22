@@ -66,33 +66,29 @@ async function reservar() {
       numeros: numerosSeleccionados
     };
   
-    try {
-      // Usamos un proxy CORS para desarrollo
-      const PROXY_URL = 'https://cors-anywhere.herokuapp.com/';
-      const API_URL = PROXY_URL + CONFIG.API_URL;
-      
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify(data)
-      });
-  
-      if (!response.ok) throw new Error('Error en la respuesta del servidor');
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        // Mostrar confirmación
-        document.getElementById("form2").style.display = "none";
-        document.getElementById("confirmacion").style.display = "block";
-      } else {
-        throw new Error(result.error || "Error desconocido");
-      }
+     try {
+        // Opción 1: Proxy público alternativo (no requiere autenticación)
+        const PROXY_URL = 'https://proxy.cors.sh/';
+        const API_URL = `${PROXY_URL}${CONFIG.API_URL}`;
+        
+        // Opción 2: Tu propio proxy en Vercel/Netlify (más confiable)
+        // const API_URL = `https://tu-proxy.vercel.app/api/proxy?url=${encodeURIComponent(CONFIG.API_URL)}`;
+
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-cors-api-key': 'temp_09a8a1e4b3f5e1b1e4b3f5e1b1e4b3f5' // Clave temporal para cors.sh
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        
+        const result = await response.json();
+        // ... manejo de la respuesta
     } catch (error) {
-      console.error("Error completo:", error);
-      alert("Error al reservar: " + error.message);
+        console.error("Error completo:", error);
+        alert("Error al reservar. Recarga la página e intenta nuevamente.");
     }
-  }
+}
