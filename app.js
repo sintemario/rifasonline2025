@@ -58,14 +58,8 @@ function actualizarUI() {
     });
 }
 
+// En tu app.js
 async function reservar() {
-    // Validación básica
-    if (numerosSeleccionados.length === 0) {
-        alert("Selecciona al menos un número");
-        return;
-    }
-
-    // Obtener datos del formulario
     const data = {
         nombre: document.getElementById("nombre").value.trim(),
         apellido: document.getElementById("apellido").value.trim(),
@@ -74,50 +68,39 @@ async function reservar() {
         numeros: numerosSeleccionados
     };
 
-    // Validación avanzada
-    if (!data.nombre || !data.dni || !data.celular) {
-        alert("Completa todos los campos obligatorios");
-        return;
-    }
-
     try {
-        // Configuración de la solicitud
-        const response = await fetch(CONFIG.API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+        // URL DIRECTA sin proxy (asegúrate que termina en /exec)
+        const API_URL = "https://script.google.com/macros/s/AKfycbz_sF2XPoxFz80RMEOl10PpSoosGPkYv-8Akki53BSJF6zJ51D9_HCPKnwb6gYMtMOA0w/exec";
+        
+        // Método especial para GAS
+        const response = await fetch(`${API_URL}?nocache=${Date.now()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
-            redirect: "follow" // Importante para Google Apps Script
+            redirect: 'manual' // Crucial para evitar CORS
         });
 
-        // Manejar redirección (necesario para GAS)
-        const finalUrl = response.redirected ? response.url : CONFIG.API_URL;
-        const finalResponse = await fetch(finalUrl);
-        
-        if (!finalResponse.ok) {
-            throw new Error(`Error del servidor: ${finalResponse.status}`);
-        }
-
-        const result = await finalResponse.json();
-
-        // Mostrar confirmación
-        if (result.success) {
-            document.getElementById("form2").style.display = "none";
-            document.getElementById("confirmacion").style.display = "block";
-            document.getElementById("alias-display").textContent = CONFIG.ALIAS;
-            document.getElementById("whatsapp-link").href = `https://wa.me/${CONFIG.WHATSAPP}`;
-            
-            // Limpiar selección
-            numerosSeleccionados = [];
-            actualizarUI();
+        // Manejar redirección manualmente
+        if (response.type === 'opaqueredirect') {
+            const finalResponse = await fetch(response.url);
+            const result = await finalResponse.json();
+            manejarRespuesta(result);
         } else {
-            throw new Error(result.error || "Error desconocido");
+            const result = await response.json();
+            manejarRespuesta(result);
         }
-
+        
     } catch (error) {
         console.error("Error completo:", error);
-        alert(`Error al reservar: ${error.message}\nIntenta nuevamente.`);
-        
-        // Opcional: Reintentar automáticamente
-        // setTimeout(reservar, 2000);
+        alert("Error al conectar. Recarga e intenta nuevamente.");
+    }
+}
+
+function manejarRespuesta(result) {
+    if (result && result.success) {
+        document.getElementById("form2").style.display = "none";
+        document.getElementById("confirmacion").style.display = "block";
+    } else {
+        throw new Error(result.error || "Error desconocido");
     }
 }
