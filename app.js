@@ -61,39 +61,57 @@ function actualizarUI() {
 // En tu app.js
 async function reservar(event) {
   event.preventDefault();
-  const data = {
-    nombre: document.getElementById("nombre").value,
-    apellido: document.getElementById("apellido").value,
-    dni: document.getElementById("dni").value,
-    celular: document.getElementById("celular").value,
-    numeros: numerosSeleccionados
-  };
-
+  
   try {
-    // Paso 1: Enviar datos (ignorando CORS)
-    await fetch("https://script.google.com/macros/s/AKfycbxWj7-50CBqvEM-eT9dwSmQ5HbR7mLdMp6YW6Q5F3ge8izCYBQhv3zQcQ4q99SZW2AQ5Q/exec", {
+    // Validación reforzada
+    if (numerosSeleccionados.length === 0) {
+      throw new Error("Selecciona al menos un número");
+    }
+
+    const camposRequeridos = ['nombre', 'dni', 'celular'];
+    const faltantes = camposRequeridos.filter(id => !document.getElementById(id).value.trim());
+    
+    if (faltantes.length > 0) {
+      throw new Error(`Faltan campos: ${faltantes.join(', ')}`);
+    }
+
+    // Construcción del payload
+    const payload = {
+      nombre: document.getElementById("nombre").value.trim(),
+      apellido: document.getElementById("apellido").value.trim(),
+      dni: document.getElementById("dni").value.trim(),
+      celular: document.getElementById("celular").value.trim(),
+      numeros: numerosSeleccionados
+    };
+
+    console.log("Payload creado:", payload);
+
+    // Envío con manejo de errores mejorado
+    const response = await fetch(CONFIG.API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-      mode: 'no-cors' // Ignora CORS
+      body: JSON.stringify(payload),
+      redirect: 'follow'
     });
 
-    // Paso 2: Mostrar confirmación (asumiendo éxito)
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error HTTP ${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log("Respuesta del servidor:", result);
+
+    if (!result.success) {
+      throw new Error(result.error || "Error desconocido del servidor");
+    }
+
+    // Éxito
     document.getElementById("form2").style.display = "none";
     document.getElementById("confirmacion").style.display = "block";
     
   } catch (error) {
-    alert("Datos enviados. Verifica en la hoja de cálculo.");
-    console.log("Posible éxito (aunque haya error CORS)");
-
-      
+    console.error("Error completo:", error);
+    alert(`Error al reservar: ${error.message}`);
   }
-    console.log("Iniciando reserva..."); // 1️⃣
-console.log("Datos a enviar:", { 
-  nombre: document.getElementById("nombre").value,
-  apellido: document.getElementById("apellido").value,
-  dni: document.getElementById("dni").value,
-  celular: document.getElementById("celular").value,
-  numeros: numerosSeleccionados
-}); 
 }
