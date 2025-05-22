@@ -59,7 +59,8 @@ function actualizarUI() {
 }
 
 // En tu app.js
-async function reservar() {
+async function reservar(event) {
+  event.preventDefault();
   const data = {
     nombre: document.getElementById("nombre").value,
     apellido: document.getElementById("apellido").value,
