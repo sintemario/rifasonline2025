@@ -60,6 +60,13 @@ function actualizarUI() {
 
 // En tu app.js
 async function reservar() {
+    // Validación básica
+    if (numerosSeleccionados.length === 0) {
+        alert("¡Selecciona al menos un número!");
+        return;
+    }
+
+    // Preparar datos
     const data = {
         nombre: document.getElementById("nombre").value.trim(),
         apellido: document.getElementById("apellido").value.trim(),
@@ -68,15 +75,22 @@ async function reservar() {
         numeros: numerosSeleccionados
     };
 
+    // Validación avanzada
+    if (!data.nombre || !data.dni || !data.celular) {
+        alert("Por favor completa todos los campos obligatorios");
+        return;
+    }
+
     try {
-        // URL DIRECTA sin proxy (asegúrate que termina en /exec)
-        const API_URL = "https://script.google.com/macros/s/AKfycbz_sF2XPoxFz80RMEOl10PpSoosGPkYv-8Akki53BSJF6zJ51D9_HCPKnwb6gYMtMOA0w/exec";
+        // URL directa SIN proxy
+        const API_URL = "https://script.google.com/macros/s/AKfycbxWj7-50CBqvEM-eT9dwSmQ5HbR7mLdMp6YW6Q5F3ge8izCYBQhv3zQcQ4q99SZW2AQ5Q/exec";
         
-        // Método especial para GAS
-        const response = await fetch(`${API_URL}?nocache=${Date.now()}`, {
+        // Enviar datos con manejo especial para GAS
+        const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
+            credentials: 'omit',
             redirect: 'manual' // Crucial para evitar CORS
         });
 
@@ -84,23 +98,29 @@ async function reservar() {
         if (response.type === 'opaqueredirect') {
             const finalResponse = await fetch(response.url);
             const result = await finalResponse.json();
-            manejarRespuesta(result);
+            handleResponse(result);
         } else {
             const result = await response.json();
-            manejarRespuesta(result);
+            handleResponse(result);
         }
         
     } catch (error) {
         console.error("Error completo:", error);
-        alert("Error al conectar. Recarga e intenta nuevamente.");
+        alert("Error al conectar con el servidor. Por favor intenta nuevamente.");
     }
 }
 
-function manejarRespuesta(result) {
-    if (result && result.success) {
+function handleResponse(result) {
+    if (result.success) {
         document.getElementById("form2").style.display = "none";
         document.getElementById("confirmacion").style.display = "block";
+        document.getElementById("alias-display").textContent = CONFIG.ALIAS;
+        document.getElementById("whatsapp-link").href = `https://wa.me/${CONFIG.WHATSAPP}`;
+        
+        // Limpiar selección
+        numerosSeleccionados = [];
+        actualizarUI();
     } else {
-        throw new Error(result.error || "Error desconocido");
+        throw new Error(result.error || "Error en el servidor");
     }
 }
